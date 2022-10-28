@@ -4,6 +4,8 @@ const mongoose=require("mongoose")
 const User=require("../models/User.model")
 const jwt=require("jsonwebtoken")
 const nodemailer=require("nodemailer")
+const bcrypt= require("bcrypt")
+
 require("dotenv").config()
 
 
@@ -92,6 +94,86 @@ router.post("/signup",async( req, res)=>{
     }
      
 })
+
+// forgot password
+
+router.post("/verifyfp", async(req, res)=>{
+    const {email}= req.body
+    if(!email){
+        return res.status(422).json({error:"Please provide a valid email address"})
+    }else{
+      const savedUser=await  User.findOne({email:email})
+      console.log("saveduser",savedUser)
+      
+      if(savedUser){
+        try {
+            let verificationCode= Math.floor(100000+Math.random()*900000)
+            await mailer(email, verificationCode)
+            return res.status(200).json({message:"Verification Code sent to your email",email,verificationCode})
+    
+            
+        } catch (error) {
+            console.log(error) 
+            
+        }
+       
+      }else{
+        return res.status(422).json({error:"Invalid Credentials"})
+
+      }
+     
+    }
+
+})
+
+router.post("/resetpassword", async(req, res)=>{
+    const {email,password}=req.body 
+if(!email||!password){
+    return res.status(400).json({error:"Please add all the fields"})
+
+}else{
+    const savedUser=await User.findOne({email:email})
+    if(savedUser){
+        savedUser.password=password 
+      const user=await  savedUser.save()
+      console.log("user",user)
+      return res.status(200).json({message:"Password changed successfully"})
+    }else{
+        return res.status(400).json({error:"Invalid Credentials"})
+    }
+}
+
+     
+})
+
+
+// login
+
+router.post("/signin", async(req, res)=>{
+    const {email,password}=req.body 
+if(!email||!password){
+    return res.status(400).json({error:"Please add all the fields"})
+
+}else{
+    const savedUser=await User.findOne({email:email})
+    if(!savedUser){
+        return res.status(400).json({error:"Invalid Credentials"})
+
+      
+    }else{
+      const match= await bcrypt.compare(password,savedUser.password)
+      if(match){
+     const token= jwt.sign({_id:savedUser._id},process.env.JWT_SECRET)
+       const {_id,email,username}=savedUser
+       return res.status(200).json({message:"Signed in successfully",token,user:{_id,username,email}})
+      }else{
+        return res.status(400).json({error:"Invalid Credentials"})
+      }
+    }
+
+}   
+})
+
 
 
 module.exports=router
