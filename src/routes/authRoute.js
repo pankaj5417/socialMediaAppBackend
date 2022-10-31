@@ -174,6 +174,44 @@ if(!email||!password){
 }   
 })
 
+// userdata
 
+// router.post("/userdata", async( req, res)=>{
+//   const {email}=req.body 
+//   const savedUser=await User.findOne({email:email})
+//   if(!savedUser){
+//     return res.status(400).json({error:"Invalid credentials"})
+//   }else{
+//     console.log("savedUser",savedUser)
+
+//     res.status(200).json({message:"User Data Fetched Successfully",user:savedUser})
+//   }
+
+
+// })
+
+router.post("/userdata", async( req, res)=>{
+  const {authorization}=req.headers;
+
+  if(!authorization){
+    return res.status(401).json({error:"You must be logged in, token not given"})
+  }
+  const token= authorization.split(" ")[1]
+  console.log("token", token);
+
+  jwt.verify(token,process.env.JWT_SECRET,async( err, payload)=>{
+    if(err){
+      return res.status(401).json({error:"You must be logged in,token invalid"})
+
+    }
+
+    const {_id}=payload
+
+  const userdata=await  User.findById(_id)
+  return res.status(200).json({message:"User Data Fetched Successfully",user:userdata})
+
+  })
+  
+})
 
 module.exports=router

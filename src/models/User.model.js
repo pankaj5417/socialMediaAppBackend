@@ -24,7 +24,21 @@ const userSchema=new mongoose.Schema({
     posts:{
         type:Array,
         default:[]
+    },
+    followers:{
+        type:Array,
+        default:[]
+    },
+    following:{
+        type:Array,
+        default:[]
+    },
+    description:{
+        type:String,
+        default:""
     }
+
+
 
 })
 
